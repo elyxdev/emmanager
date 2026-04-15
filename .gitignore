@@ -1,0 +1,7 @@
+modpacks_manager/
+*.bat
+*.exe
+dist/
+build/
+*.spec
+__pycache__
