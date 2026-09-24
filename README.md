@@ -14,22 +14,23 @@
 
 * 📦 **Guardar modpack**
 
-  * Guarda todos los mods actuales.
-  * Se añade automáticamente a la lista de modpacks disponibles.
+  * Guarda tus **mods, config y resourcepacks** actuales.
+  * Se comprime en un único `.zip` y se añade a la lista de modpacks disponibles.
+  * Solo se descomprime en la carpeta de Minecraft cuando lo usas.
 
 * 📥 **Importar ZIP**
 
-  * Importa modpacks previamente exportados con EMManager.
+  * Importa modpacks previamente exportados con EMManager (también los del formato antiguo).
   * Ideal para compartir configuraciones.
 
 * 📤 **Exportar ZIP**
 
-  * Exporta el modpack seleccionado.
+  * Exporta cualquier modpack de la lista.
   * Fácil de enviar o respaldar.
 
 * 🧹 **Limpiar mods**
 
-  * Elimina todos los mods de la carpeta.
+  * Elimina todos los mods de la carpeta (no toca config ni resourcepacks).
 
 * 🚫 **Sin mods**
 
@@ -46,6 +47,12 @@
 * 📁 **Selección manual**
 
   * Puedes cambiarla usando el botón **"Seleccionar carpeta"**.
+
+---
+
+## ⚠️ Importante
+* Al usar un modpack se **reemplazan** las carpetas `mods`, `config` y `resourcepacks` de Minecraft por las del modpack.
+* Los modpacks guardados con versiones anteriores (carpetas) se convierten solos a `.zip` la primera vez que abres la app.
 
 ---
 
