@@ -11,9 +11,17 @@ CURRENT_FILE = "current_modpack.txt"
 MANIFEST_FILE = "emmanager.json"
 EMPTY_LABEL = "< Sin mods >"
 
-# Carpetas que forman un modpack. Dentro del .zip van una al lado de la otra
-# (aunque estén vacías) y al usar el modpack se colocan junto a la carpeta mods.
-PACK_DIRS = ("mods", "config", "resourcepacks")
+# Carpetas que forman un modpack (todas van una al lado de la otra dentro del .zip):
+#  - obligatorias: siempre se guardan, aunque estén vacías
+#  - opcionales:   solo se guardan si existen en la carpeta de Minecraft
+REQUIRED_DIRS = ("mods", "config", "resourcepacks")
+OPTIONAL_DIRS = ("shaderpacks", "kubejs")
+PACK_DIRS = REQUIRED_DIRS + OPTIONAL_DIRS
+
+# Al usar un modpack: estas se vacían y se reemplazan (scripts/mods viejos dan conflictos)...
+REPLACE_DIRS = ("mods", "kubejs")
+# ...y estas se fusionan (se sobrescribe lo que exista, se añade lo nuevo, no se borra nada)
+MERGE_DIRS = ("config", "resourcepacks", "shaderpacks")
 
 TMP_DIRNAME = ".emmanager_tmp"
 RECOVER_FILE = "RECUPERAR.txt"
@@ -74,6 +82,8 @@ class ModpackService:
             "mods": self.mods_path,
             "config": os.path.join(game, "config"),
             "resourcepacks": os.path.join(game, "resourcepacks"),
+            "shaderpacks": os.path.join(game, "shaderpacks"),
+            "kubejs": os.path.join(game, "kubejs"),
         }
 
     def _require_path(self):
@@ -143,7 +153,8 @@ class ModpackService:
         return info
 
     def list_contents(self, nombre):
-        mods, packs, config_files = [], [], 0
+        mods, resource, shaders = [], set(), set()
+        config_files = kubejs_files = 0
         with zipfile.ZipFile(self.zip_path(nombre)) as zf:
             for n in zf.namelist():
                 if n.endswith("/"):
@@ -152,14 +163,20 @@ class ModpackService:
                 if top == "mods":
                     mods.append(rest)
                 elif top == "resourcepacks":
-                    packs.append(rest)
+                    resource.add(rest.split("/")[0])
+                elif top == "shaderpacks":
+                    shaders.add(rest.split("/")[0])
                 elif top == "config":
                     config_files += 1
+                elif top == "kubejs":
+                    kubejs_files += 1
         return {
             "info": self.get_info(nombre),
             "mods": sorted(mods, key=str.lower),
-            "resourcepacks": sorted(packs, key=str.lower),
+            "resourcepacks": sorted(resource, key=str.lower),
+            "shaderpacks": sorted(shaders, key=str.lower),
             "config_files": config_files,
+            "kubejs_files": kubejs_files,
         }
 
     def get_current(self):
@@ -189,6 +206,8 @@ class ModpackService:
         for key, base in self._targets().items():
             if not os.path.isdir(base):
                 continue
+            if key in OPTIONAL_DIRS:
+                dirs.append(key)
             for root, dnames, fnames in os.walk(base):
                 rel_root = os.path.relpath(root, base)
                 prefix = key if rel_root == "." else key + "/" + rel_root.replace(os.sep, "/")
@@ -223,8 +242,16 @@ class ModpackService:
         if not os.path.isfile(zpath):
             raise ModpackError("El modpack no existe.")
 
-        self._replace(("mods",), lambda staging: self._extract(zpath, staging, progress),
-                      merge=("config", "resourcepacks"))
+        try:
+            with zipfile.ZipFile(zpath) as zf:
+                present = {n.replace("\\", "/").split("/")[0] for n in zf.namelist()}
+        except zipfile.BadZipFile:
+            raise ModpackError("El ZIP del modpack está dañado. No se modificó nada.")
+
+        # Las carpetas opcionales solo se tocan si el modpack las incluye
+        replace = tuple(k for k in REPLACE_DIRS if k in REQUIRED_DIRS or k in present)
+        merge = tuple(k for k in MERGE_DIRS if k in REQUIRED_DIRS or k in present)
+        self._replace(replace, lambda staging: self._extract(zpath, staging, progress), merge=merge)
         self._report(progress, 1.0, "Listo")
         self._write_current(nombre)
 
@@ -276,7 +303,7 @@ class ModpackService:
                 with zipfile.ZipFile(tmp, "w", zipfile.ZIP_DEFLATED) as dst:
                     dst.writestr(MANIFEST_FILE, json.dumps(manifest, indent=4))
                     written = set()
-                    for key in PACK_DIRS:
+                    for key in REQUIRED_DIRS:
                         self._add_dir(dst, key)
                         written.add(key + "/")
 
@@ -438,7 +465,7 @@ class ModpackService:
         done = 0
         with zipfile.ZipFile(tmp, "w", zipfile.ZIP_DEFLATED) as zf:
             zf.writestr(MANIFEST_FILE, json.dumps(manifest, indent=4))
-            for key in PACK_DIRS:          # siempre, aunque estén vacías
+            for key in REQUIRED_DIRS:      # siempre, aunque estén vacías
                 self._add_dir(zf, key)
             for d in dirs:
                 self._add_dir(zf, d)

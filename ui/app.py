@@ -75,7 +75,7 @@ class SaveDialog(ctk.CTkToplevel):
         ctk.CTkLabel(self, text="Guardar modpack actual", font=fonts["h2"]).pack(anchor="w", padx=20, pady=(18, 2))
         ctk.CTkLabel(
             self,
-            text="Se guardarán las carpetas mods, config y resourcepacks tal como están ahora, "
+            text="Se guardarán mods, config y resourcepacks (y shaderpacks y kubejs si existen) tal como están ahora, "
                  "comprimidas en un solo .zip.",
             font=fonts["small"], text_color=MUTED, wraplength=390, justify="left",
         ).pack(anchor="w", padx=20, pady=(0, 6))
@@ -148,6 +148,10 @@ class ContentsWindow(ctk.CTkToplevel):
         lines += ["", "CONFIG", f"  {data['config_files']} archivo(s)" if data["config_files"] else "  (vacía)"]
         lines += ["", f"RESOURCEPACKS ({len(data['resourcepacks'])})"]
         lines += [f"  - {r}" for r in data["resourcepacks"]] or ["  (vacía)"]
+        if data["shaderpacks"]:
+            lines += ["", f"SHADERPACKS ({len(data['shaderpacks'])})"] + [f"  - {x}" for x in data["shaderpacks"]]
+        if data["kubejs_files"]:
+            lines += ["", "KUBEJS", f"  {data['kubejs_files']} archivo(s)"]
 
         # Un solo cuadro de texto: mucho más ligero que una etiqueta por mod
         box = ctk.CTkTextbox(self, font=fonts["main"], wrap="none")
@@ -382,7 +386,8 @@ class App(ctk.CTk):
             f"Vas a usar '{name}'.\n\n"
             f"Se eliminarán los mods actuales de:\n{self.service.mods_path}\n"
             "y se reemplazarán por los del modpack. Los que no estén guardados en un modpack se perderán.\n\n"
-            "Config y resourcepacks se fusionan: se añaden o sobrescriben los del modpack "
+            "Si el modpack incluye kubejs, esa carpeta también se reemplaza.\n\n"
+            "Config, resourcepacks y shaderpacks se fusionan: se añaden o sobrescriben los del modpack "
             "y se conserva lo que ya tenías.\n¿Continuar?"
         ):
             return
