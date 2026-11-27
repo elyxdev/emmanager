@@ -14,7 +14,7 @@
 
 * 📦 **Guardar modpack**
 
-  * Guarda tus **mods, config y resourcepacks** actuales.
+  * Guarda tus **mods, config y resourcepacks** actuales (van siempre, aunque estén vacías) y también **shaderpacks y kubejs** si existen.
   * Se comprime en un único `.zip` y se añade a la lista de modpacks disponibles.
   * Solo se descomprime en la carpeta de Minecraft cuando lo usas.
 
@@ -51,7 +51,11 @@
 ---
 
 ## ⚠️ Importante
-* Al usar un modpack se **reemplazan** las carpetas `mods`, `config` y `resourcepacks` de Minecraft por las del modpack.
+
+* EMManager **ya no guarda backups** de tus mods: al usar un modpack o limpiar mods, lo que no esté guardado en un modpack se pierde.
+* Al usar un modpack, los **mods anteriores se eliminan** y se reemplazan por los del modpack (para evitar conflictos).
+* `config`, `resourcepacks` y `shaderpacks` se **fusionan**: se sobrescribe lo que ya existe y se añade lo nuevo, sin borrar lo que ya tenías.
+* `kubejs` se **reemplaza** por completo, pero solo si el modpack la incluye.
 * Los modpacks guardados con versiones anteriores (carpetas) se convierten solos a `.zip` la primera vez que abres la app.
 
 ---
